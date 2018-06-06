@@ -6,35 +6,36 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import isPlainObject from 'lodash.isplainobject'
+import { Map } from 'immutable'
 
 const FILTER_INIT = { type: '@@FILTER/INIT' }
 
 const filteredReducer = reducer => {
-  let knownKeys = Object.keys(reducer(undefined, FILTER_INIT))
-
+  let knownKeys = reducer(Map(), FILTER_INIT)
+    .keySeq()
+    .toArray()
   return (state, action) => {
-    let filteredState = state
+    let filteredState = Map()
 
     if (knownKeys.length && state !== undefined) {
-      filteredState = knownKeys.reduce((current, key) => {
-        current[key] = state[key]
-        return current
-      }, {})
+      knownKeys.map(key => {
+        filteredState = filteredState.set(key, state.get(key))
+        return null
+      })
     }
 
     let newState = reducer(filteredState, action)
 
+    // TODO: Should this be referential equality (as it's now) or value equality?
     if (newState === filteredState) {
       return state
     }
 
-    if (isPlainObject(newState)) {
-      knownKeys = Object.keys(newState)
-      return {
-        ...state,
-        ...newState
+    if (Map.isMap(newState)) {
+      if (state !== undefined) {
+        return state.merge(newState)
       }
+      return newState
     } else {
       return newState
     }

@@ -6,7 +6,7 @@
  * LICENSE file in the root directory of this source tree.
  */
 
-import { combineReducers } from 'redux'
+import { combineReducers } from 'redux-immutable'
 import concatenateReducers from 'redux-concatenate-reducers'
 import filteredReducer from './filteredReducer'
 
@@ -43,9 +43,8 @@ const collapseReducers = node => {
     (reducerMap, key) => ({ ...reducerMap, [key]: collapseReducers(children[key]) }),
     {}
   )
-
-  const childrenReducer = combineReducers(reducersToCombine)
-
+  const merger = (oldState, newState) => (oldState ? oldState.mergeDeep(newState) : newState)
+  const childrenReducer = combineReducers(reducersToCombine, merger)
   return reducer ? concatenateReducers([filteredReducer(reducer), filteredReducer(childrenReducer)]) : childrenReducer
 }
 
